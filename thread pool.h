@@ -7,32 +7,37 @@
 #include <functional>
 #include <shared_mutex>
 
+//创建一个安全队列 
 template <typename T>
 class SafeQueue{
 private:
-	std::queue<T> m_queue;
+	std::queue<T> m_queue;//构造队列 
 	std::shared_mutex m_mutex;
 public:
+	SafeQueue() {}
+	SafeQueue(SafeQueue &&other) {}
+	~SafeQueue() {}
+	//返回队列是否为空
 	bool empty(){
 		std::shared_lock<std::shared_mutex> lock(m_mutex);
-		return m_queue.empty();
-	}
-	
-	int size(){
+		return m_queue.empty(); 
+	} 
+	//返回队列大小
+	int size(){ 
 		std::shared_lock<std::shared_mutex> lock(m_mutex);
 		return m_queue.size();
 	}
-	
+	//队列添加元素
 	void push(T &t){
 		std::unique_lock<std::shared_mutex> lock(m_mutex);
-		m_queue.push(t);
-	}
-	
+		m_queue.emplace(t);
+	} 
+	//队列取出元素
 	bool pop(T &t){
 		std::unique_lock<std::shared_mutex> lock(m_mutex);
-		if(m_queue.empty())	return false;
-		t = std::move(m_queue.front());
-		m_queue.pop();
+		if(m_queue.empty()) return false;
+		t=std::move(m_queue.front());//取出队首元素，返回队首元素值，并进行右值引用 
+		m_queue.pop();//弹出队首元素 
 		return true;
 	}
 };
@@ -43,10 +48,8 @@ private:
 	private:
 		ThreadPool *m_pool;//所属线程池
 	public:
-		ThreadWorker(ThreadPool * pool){
-			m_pool = pool;
+		ThreadWorker(ThreadPool * pool) : m_pool(pool){
 		} 
-		
 		//重载()操作
 		//让()操作进行从队列中取任务和执行 
 		void operator()(){
@@ -74,22 +77,14 @@ private:
 	std::mutex m_mutex;
 	std::condition_variable m_lock;
 public:
-	ThreadPool(const int n = 4){
-		//创建一个大小为n的thread数组 
-		m_threads = std::vector<std::thread> (n);
-		//for(int i = 0; i < m_threads.size(); i++)
-		//	m_threads[i] = std::thread(ThreadWorker(this));
-		m_shutdown=false;
+	ThreadPool(const int n = 4) : m_threads(n),m_shutdown(false){
+		for(auto & i : m_threads)
+			i = std::thread(ThreadWorker(this));
 	}
 	ThreadPool(const ThreadPool &) = delete;
 	ThreadPool(ThreadPool &&) = delete;
 	ThreadPool& operator=(const ThreadPool&) = delete;
     ThreadPool& operator=(ThreadPool&&) = delete;
-	
-	void init(){
-		for(int i = 0; i < m_threads.size(); i++)
-			m_threads[i] = std::thread(ThreadWorker(this));
-	}
 	
 	template <typename F,typename ... Args>
 	auto submit(F && f, Args && ... args) -> std::future<decltype(f(args...))>

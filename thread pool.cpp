@@ -32,7 +32,7 @@ int main()
 {
 	//创建三个线程的线程池
 	ThreadPool pool(3);
-	pool.init();
+	//pool.init();
 	
 	//提交乘法操作，共三十个
 	for(int i=1;i<=3;i++)
@@ -55,4 +55,3 @@ int main()
 	std::cout<<"Last operation result is equals to " << res << std::endl;
 	return 0;
 }
-
