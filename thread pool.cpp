@@ -1,18 +1,9 @@
 #include <iostream>
-#include <random>
 #include "thread pool.h"
-
-std::random_device rd; // 真实随机数产生器
-
-std::mt19937 mt(rd()); //生成计算随机数mt
-
-std::uniform_int_distribution<int> dist(-1000,1000); //生成-1000到1000之间的离散均匀分布数
-
-auto rnd = std::bind(dist,mt);
 
 //设置线程睡眠时间
 void simulate_hard_computation(){
-	std::this_thread::sleep_for(std::chrono::milliseconds(2000+rnd()));
+	std::this_thread::sleep_for(std::chrono::milliseconds(200));
 } 
 
 //添加两个数字的简单函数并打印结果
@@ -37,12 +28,11 @@ int muliply_return (const int a,const int b){
 	return res;
 } 
 
-void example(){
+int main()
+{
 	//创建三个线程的线程池
 	ThreadPool pool(3);
-	
-	//初始化线程池
-	pool.init() ;
+	pool.init();
 	
 	//提交乘法操作，共三十个
 	for(int i=1;i<=3;i++)
@@ -63,15 +53,6 @@ void example(){
 	//等待乘法输出完成
 	int res=future2.get(); 
 	std::cout<<"Last operation result is equals to " << res << std::endl;
-	
-	//关闭线程池
-	pool.shutdown(); 
-}
-
-int main()
-{
-	example();
-	
 	return 0;
 }
 
